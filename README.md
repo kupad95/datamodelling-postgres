@@ -29,7 +29,7 @@ The minimum project specification is to create a database schema and ETL pipelin
 - **Log datasets**: all json files are nested in subdirectories under */data/log_data*. A sample of a single row of each file is:
 
 ```
-{"artist":"Slipknot","auth":"Logged In","firstName":"Aiden","gender":"M","itemInSession":0,"lastName":"Ramirez","length":192.57424,"level":"paid","location":"New York-Newark-Jersey City, NY-NJ-PA","method":"PUT","page":"NextSong","registration":1540283578796.0,"sessionId":19,"song":"Opium Of The People (Album Version)","status":200,"ts":1541639510796,"userAgent":"\"Mozilla\/5.0 (Windows NT 6.1) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/36.0.1985.143 Safari\/537.36\"","userId":"20"}
+{"artist":"Sydney Youngblood", "auth":"Logged In", "firstName":"Jacob", "gender":"M", "itemInSession":53, "lastName":"Klein", "length":238.07955, "level":"paid", "location":"Tampa-St. Petersburg-Clearwater, FL", "method":"PUT", "page":"NextSong", "registration":1.540558e+12, "sessionId":954, "song":"Ain't No Sunshine", "status":200, "ts":1543449657796, "userAgent":"\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_4...)"", "userId":"73"}
 ```
 
 ## Database Schema
