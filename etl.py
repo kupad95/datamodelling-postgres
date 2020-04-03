@@ -2,61 +2,48 @@ import os
 import glob
 import psycopg2
 import pandas as pd
+import time
 from sql_queries import *
 
 
 def process_song_file(cur, filepath):
-    """
-    Process songs files and insert records into the Postgres database.
-    :param cur: cursor reference
-    :param filepath: complete file path for the file to load
-    """
-
     # open song file
     df = pd.DataFrame([pd.read_json(filepath, typ='series', convert_dates=False)])
 
-    for value in df.values:
-        num_songs, artist_id, artist_latitude, artist_longitude, artist_location, artist_name, song_id, title, duration, year = value
-
-        # insert artist record
-        artist_data = (artist_id, artist_name, artist_location, artist_latitude, artist_longitude)
-        cur.execute(artist_table_insert, artist_data)
-
-        # insert song record
-        song_data = (song_id, title, artist_id, year, duration)
-        cur.execute(song_table_insert, song_data)
+    # insert song record
+    song_data = df[['song_id','title','artist_id','year','duration']].values
+    song_data = song_data[0].tolist()
+    cur.execute(song_table_insert, song_data)
     
-    print(f"Records inserted for file {filepath}")
+    # insert artist record
+    artist_data = df[['artist_id','artist_name','artist_location','artist_latitude','artist_longitude']].values
+    artist_data = artist_data[0].tolist()
+    cur.execute(artist_table_insert, artist_data)
 
 
 def process_log_file(cur, filepath):
-    """
-    Process Event log files and insert records into the Postgres database.
-    :param cur: cursor reference
-    :param filepath: complete file path for the file to load
-    """
     # open log file
-    df = df = pd.read_json(filepath, lines=True)
+    df = pd.read_json(filepath, lines=True)
 
     # filter by NextSong action
-    df = df[df['page'] == "NextSong"].astype({'ts': 'datetime64[ms]'})
+    df = df[df['page'] == "NextSong"]
 
     # convert timestamp column to datetime
-    t = pd.Series(df['ts'], index=df.index)
+    t = pd.to_datetime(df['ts'], unit='ms')
     
     # insert time data records
-    column_labels = ["timestamp", "hour", "day", "weelofyear", "month", "year", "weekday"]
     time_data = []
     for data in t:
         time_data.append([data ,data.hour, data.day, data.weekofyear, data.month, data.year, data.day_name()])
-
-    time_df = pd.DataFrame.from_records(data = time_data, columns = column_labels)
+    column_labels = ('timestamp','hour','day','week of year', 'month', 'year', 'weekday')
+    time_df = time_df = pd.DataFrame(data = time_data, columns = column_labels)
 
     for i, row in time_df.iterrows():
         cur.execute(time_table_insert, list(row))
 
     # load user table
     user_df = df[['userId','firstName','lastName','gender','level']]
+    user_df = user_df.drop_duplicates(subset=None) 
 
     # insert user records
     for i, row in user_df.iterrows():
@@ -75,18 +62,11 @@ def process_log_file(cur, filepath):
             songid, artistid = None, None
 
         # insert songplay record
-        songplay_data = ( row.ts, row.userId, row.level, songid, artistid, row.sessionId, row.location, row.userAgent)
-        cur.execute(songplay_table_insert, songplay_data)
+        songplay_data = (pd.to_datetime(row.ts, unit='ms'), int(row.userId), row.level, songid, artistid, row.sessionId, row.location, row.userAgent)
+    cur.execute(songplay_table_insert, songplay_data)
 
 
 def process_data(cur, conn, filepath, func):
-    """
-    Driver function to load data from songs and event log files into Postgres database.
-    :param cur: a database cursor reference
-    :param conn: database connection reference
-    :param filepath: parent directory where the files exists
-    :param func: function to call
-    """
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
@@ -106,10 +86,7 @@ def process_data(cur, conn, filepath, func):
 
 
 def main():
-    """
-    Driver function for loading songs and log data into Postgres database
-    """
-    conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=postgres password=admin")
+    conn = psycopg2.connect("host=127.0.0.1 dbname=sparkifydb user=student password=student")
     cur = conn.cursor()
 
     process_data(cur, conn, filepath='data/song_data', func=process_song_file)
@@ -120,4 +97,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print("\n\nFinished processing!!!\n\n")
