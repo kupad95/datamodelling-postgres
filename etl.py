@@ -7,6 +7,11 @@ from sql_queries import *
 
 
 def process_song_file(cur, filepath):
+    """Reads songs log file row by row, selects needed fields and inserts them into song and artist tables.
+        Parameters:
+            cur (psycopg2.cursor()): Cursor of the sparkifydb database
+            filepath (str): Filepath of the file to be analyzed
+    """
     # open song file
     df = pd.DataFrame([pd.read_json(filepath, typ='series', convert_dates=False)])
 
@@ -22,6 +27,12 @@ def process_song_file(cur, filepath):
 
 
 def process_log_file(cur, filepath):
+    """Reads user activity log file row by row, filters by NexSong, selects needed fields, transforms them and inserts
+    them into time, user and songplay tables.
+            Parameters:
+                cur (psycopg2.cursor()): Cursor of the sparkifydb database
+                filepath (str): Filepath of the file to be analyzed
+    """
     # open log file
     df = pd.read_json(filepath, lines=True)
 
@@ -67,6 +78,8 @@ def process_log_file(cur, filepath):
 
 
 def process_data(cur, conn, filepath, func):
+    """Walks through all files nested under filepath, and processes all logs found.
+    """
     # get all files matching extension from directory
     all_files = []
     for root, dirs, files in os.walk(filepath):
